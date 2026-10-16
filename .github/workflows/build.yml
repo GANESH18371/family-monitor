@@ -13,19 +13,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Unzip project and add Firebase config
-        run: |
-          unzip -q project.zip -d app
-          cp google-services.json app/parent/google-services.json
-          cp google-services.json app/child/google-services.json
-
       - name: Install Gradle 8.9
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
           unzip -q gradle-8.9-bin.zip -d $HOME/gradle
           echo "$HOME/gradle/gradle-8.9/bin" >> $GITHUB_PATH
 
-      - name: Accept licenses and install SDK packages
+      - name: Install Android SDK packages
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdtools.zip
@@ -37,13 +31,17 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
 
+      - name: Add Firebase config
+        run: |
+          cp google-services.json parent/google-services.json
+          cp google-services.json child/google-services.json
+
       - name: Build debug APKs
-        working-directory: app
         run: gradle assembleDebug --no-daemon --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
           name: apks
           path: |
-            app/parent/build/outputs/apk/debug/*.apk
-            app/child/build/outputs/apk/debug/*.apk
+            parent/build/outputs/apk/debug/*.apk
+            child/build/outputs/apk/debug/*.apk
